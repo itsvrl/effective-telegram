@@ -11,6 +11,10 @@ volumes:
     driver: local
   code-s3:
     driver: local
+  wikijs_data:
+    driver: local
+  wikijs_config:
+    driver: local
 
 services:
   server:
@@ -53,7 +57,7 @@ services:
     environment:
       - PUID=$USER_UID
       - PGID=$USER_GID
-      - TZ=Europe/Oslo
+      - TZ=$TZ
       - PASSWORD=$PASSWORD #optional
       #- HASHED_PASSWORD= #optional
       - SUDO_PASSWORD=$PASSWORD #optional
@@ -69,3 +73,20 @@ services:
       - "8443:8443"
     depends_on:
        - db
+  wikijs:
+    image: lscr.io/linuxserver/wikijs:latest
+    container_name: wikijs
+    networks:
+      - devops
+    environment:
+      - PUID=$USER_UID
+      - PGID=$USER_GID
+      - TZ=$TZ
+    volumes:
+      - wikijs_config:/config
+      - wikijs_data:/data
+    ports:
+      - 8080:3000
+    restart: unless-stopped
+
+  
