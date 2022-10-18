@@ -3,6 +3,8 @@ version: "3"
 networks:
   devops:
     external: false
+  documentation:
+    external: true
 
 volumes:
   postgres-s3:
@@ -14,6 +16,8 @@ volumes:
   wikijs_data:
     driver: local
   wikijs_config:
+    driver: local
+  appflowy-data:
     driver: local
 
 services:
@@ -89,4 +93,17 @@ services:
       - 8088:3000
     restart: unless-stopped
 
-  
+  appflowy:
+    image: appflowyio/appflowy_client:main
+    container_name: appflowyio
+    environment:
+      TZ: $TZ
+      DISPLAY: $DISPLAY # 'set a secure password here or it will be random'
+    # Volumes store your data between container upgrades
+    volumes:
+      - $HOME/.Xauthority:/root/.Xauthority:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /dev/dri:/dev/dri
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
+      - appflowy-data:/home/appflowy
+    restart: unless-stopped
