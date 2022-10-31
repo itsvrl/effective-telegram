@@ -1,9 +1,11 @@
 version: "3"
 
 networks:
-  devops:
-    external: false
-  documentation:
+  proxy:
+    external: true
+  trunk:
+    external: true
+  secure:
     external: true
 
 volumes:
@@ -33,15 +35,19 @@ services:
       - GITEA__database__USER=$GITEA__database__USER
       - GITEA__database__PASSWD=$GITEA__database__PASSWD
     restart: always
+    labels:
+      traefik.enable: true
+      traefik.http.router.gitea.endpoints:
+      traefik.http.router.gitea.rule: "Host(`git.vrl.sh`)"
+      traefik.http.routers.gitea.tls: true
+      traefik.http.routers.gitea.tls.certresolver: "staging"
     networks:
-      - devops
+      - proxy
+      - trunk
     volumes:
       - gitea-s3:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "8888:3000"
-      - "2221:22"
     depends_on:
        - db
   db:
@@ -52,7 +58,7 @@ services:
       - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
       - POSTGRES_DB=$POSTGRES_DB
     networks:
-      - devops
+      - trunk
     volumes:
       - postgres-s3:/var/lib/postgresql/data
   code:
@@ -69,19 +75,26 @@ services:
       #- PROXY_DOMAIN=code-server.my.domain #optional
       #- DEFAULT_WORKSPACE=/config/workspace #optional
     restart: always
+    labels:
+      traefik.enable: true
+      traefik.http.router.code.endpoints:
+      traefik.http.router.code.rule: "Host(`code.vrl.sh`)"
+      traefik.http.routers.code.tls: true
+      traefik.http.routers.code.tls.certresolver: "staging"
     networks:
-      - devops
+      - proxy
     volumes:
       - code-s3:/config
     ports:
       - "8443:8443"
     depends_on:
        - db
+
   wikijs:
     image: lscr.io/linuxserver/wikijs:latest
     container_name: wikijs
     networks:
-      - devops
+      - secure
     environment:
       - PUID=$USER_UID
       - PGID=$USER_GID
@@ -89,21 +102,4 @@ services:
     volumes:
       - wikijs_config:/config
       - wikijs_data:/data
-    ports:
-      - 8088:3000
-    restart: unless-stopped
-
-  appflowy:
-    image: appflowyio/appflowy_client:main
-    container_name: appflowyio
-    environment:
-      TZ: $TZ
-      DISPLAY: $DISPLAY # 'set a secure password here or it will be random'
-    # Volumes store your data between container upgrades
-    volumes:
-      - $HOME/.Xauthority:/root/.Xauthority:rw
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - /dev/dri:/dev/dri
-      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
-      - appflowy-data:/home/appflowy
     restart: unless-stopped
