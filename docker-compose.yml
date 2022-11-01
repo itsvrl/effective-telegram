@@ -37,7 +37,7 @@ services:
     restart: always
     labels:
       traefik.enable: true
-      traefik.http.router.gitea.endpoints:
+      traefik.http.router.gitea.endpoints: "websecure"
       traefik.http.router.gitea.rule: "Host(`git.vrl.sh`)"
       traefik.http.routers.gitea.tls: true
       traefik.http.routers.gitea.tls.certresolver: "staging"
@@ -77,7 +77,7 @@ services:
     restart: always
     labels:
       traefik.enable: true
-      traefik.http.router.code.endpoints:
+      traefik.http.router.code.endpoints: "websecure"
       traefik.http.router.code.rule: "Host(`code.vrl.sh`)"
       traefik.http.routers.code.tls: true
       traefik.http.routers.code.tls.certresolver: "staging"
